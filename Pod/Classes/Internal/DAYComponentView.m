@@ -8,7 +8,7 @@
 
 #import "DAYComponentView.h"
 
-@interface DAYComponentView () <EKEventViewDelegate>
+@interface DAYComponentView ()
 
 @property (strong, nonatomic) UILabel *textLabel;
 @property (strong, nonatomic) CAShapeLayer *dotLayer;
@@ -90,12 +90,6 @@
 
 - (void)viewDidTap:(id)sender {
     [self sendActionsForControlEvents:UIControlEventTouchUpInside];
-}
-
-#pragma mark - Event view delegate
-
-- (void)eventViewController:(EKEventViewController *)controller didCompleteWithAction:(EKEventViewAction)action {
-    [controller dismissViewControllerAnimated:YES completion:nil];
 }
 
 @end
