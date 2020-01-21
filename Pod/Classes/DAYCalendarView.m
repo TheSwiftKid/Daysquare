@@ -16,7 +16,6 @@
     NSUInteger _visibleYear;
     NSUInteger _visibleMonth;
     NSUInteger _currentVisibleRow;
-    NSArray *_eventsInVisibleMonth;
 }
 
 @property (strong, nonatomic) DAYNavigationBar *navigationBar;
@@ -29,8 +28,6 @@
 
 @property (readonly, copy) NSString *navigationBarTitle;
 
-@property (strong, nonatomic) EKEventStore *eventStore;
-
 @end
 
 @implementation DAYCalendarView
@@ -39,22 +36,6 @@
     if (self->_singleRowMode != singleRowMode) {
         self->_singleRowMode = singleRowMode;
         [self updateCurrentVisibleRow];
-    }
-}
-
-- (void)setShowUserEvents:(BOOL)showUserEvents {
-    if (showUserEvents && self.eventStore == nil && !self.showUserEvents) {
-        self.eventStore = [[EKEventStore alloc] init];
-        [self.eventStore requestAccessToEntityType:EKEntityTypeEvent completion:^(BOOL granted, NSError * _Nullable error) {
-            if (granted) {
-                self->_showUserEvents = showUserEvents;
-                [self performSelectorOnMainThread:@selector(reloadViewAnimated:) withObject:@YES waitUntilDone:nil];
-            }
-        }];
-    }
-    else {
-        self->_showUserEvents = showUserEvents;
-        [self reloadViewAnimated:YES];
     }
 }
 
@@ -352,18 +333,6 @@
         }
     }
     
-    view.containingEvent = nil;
-    if (self.showUserEvents) {
-        [self->_eventsInVisibleMonth enumerateObjectsUsingBlock:^(id  _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
-            EKEvent *event = obj;
-            if ([[DAYUtils dateFromDateComponents:comps] isEqualToDate:event.startDate]) {
-                view.containingEvent = event;
-                *stop = YES;
-                return;
-            }
-        }];
-    }
-    
     view.representedObject = comps;
     
     if (self.selectedIndicatorView && self.selectedIndicatorView.attachingView == view) {
@@ -389,27 +358,6 @@
     
     NSUInteger totalDays = [DAYUtils daysInMonth:self->_visibleMonth ofYear:self->_visibleYear];
     NSUInteger paddingDays = [DAYUtils firstWeekdayInMonth:self->_visibleMonth ofYear:self->_visibleYear] - 1;
-    
-    // Handle user events displaying.
-    if (self.showUserEvents) {
-        NSDateComponents *startComps = [[NSDateComponents alloc] init];
-        startComps.year = self->_visibleYear;
-        startComps.month = self->_visibleMonth;
-        startComps.day = 1;
-        
-        NSDateComponents *endComps = [[NSDateComponents alloc] init];
-        endComps.year = self->_visibleYear;
-        endComps.month = self->_visibleMonth;
-        endComps.day = totalDays;
-        
-        NSPredicate *predicate = [self.eventStore predicateForEventsWithStartDate:[DAYUtils dateFromDateComponents:startComps]
-                                                                          endDate:[DAYUtils dateFromDateComponents:endComps]
-                                                                        calendars:nil];
-        self->_eventsInVisibleMonth = [self.eventStore eventsMatchingPredicate:predicate];
-    }
-    else {
-        self->_eventsInVisibleMonth = nil;
-    }
     
     // Make padding days.
     NSUInteger paddingYear = self->_visibleMonth == 1 ? self->_visibleYear - 1 : self->_visibleYear;

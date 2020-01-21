@@ -7,7 +7,6 @@
 //
 
 #import "DAYComponentView.h"
-#import <EventKitUI/EventKitUI.h>
 
 @interface DAYComponentView () <EKEventViewDelegate>
 
@@ -17,18 +16,6 @@
 @end
 
 @implementation DAYComponentView
-
-- (void)setContainingEvent:(EKEvent *)containingEvent {
-    self->_containingEvent = containingEvent;
-    
-    if (containingEvent) {
-        self.dotLayer.fillColor = containingEvent.calendar.CGColor;
-        self.dotLayer.hidden = NO;
-    }
-    else {
-        self.dotLayer.hidden = YES;
-    }
-}
 
 - (instancetype)init
 {
@@ -98,43 +85,11 @@
     }
     else {
         self.textLabel.textColor = self.textColor;
-        self.dotLayer.fillColor = self.containingEvent.calendar.CGColor;
     }
 }
 
 - (void)viewDidTap:(id)sender {
     [self sendActionsForControlEvents:UIControlEventTouchUpInside];
-}
-
-- (void)viewDidLongPress:(id)sender {
-    if (self.containingEvent) {
-        [self becomeFirstResponder];
-        
-        UIMenuController *menu = [UIMenuController sharedMenuController];
-        menu.menuItems = @[[[UIMenuItem alloc] initWithTitle:self.containingEvent.title action:@selector(showEvent)]];
-        [menu setTargetRect:self.frame inView:self.superview];
-        [menu setMenuVisible:YES];
-    }
-}
-
-- (void)showEvent {
-    // If we can find a view controller to be presenter, then create and present `EKEventViewController`.
-    UIResponder *next = self;
-    while (next) {
-        if ([next respondsToSelector:@selector(presentViewController:animated:completion:)]) {
-            EKEventViewController *eventVC = [[EKEventViewController alloc] init];
-            eventVC.event = self.containingEvent;
-            eventVC.allowsEditing = YES;
-            eventVC.allowsCalendarPreview = YES;
-            eventVC.delegate = self;
-            
-            [((UIViewController *) next) presentViewController:[[UINavigationController alloc] initWithRootViewController:eventVC] animated:YES completion:nil];
-            return;
-        }
-        else {
-            next = [next nextResponder];
-        }
-    }
 }
 
 #pragma mark - Event view delegate
